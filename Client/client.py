@@ -46,6 +46,8 @@ while True:
         for box in results[0].boxes:
             box_info = [box.xywh, box.conf, box.cls]
             result_list.append(box_info)
+        if len(result_list) == 0:
+            result_list = "Nothing detected!"
         a = pickle.dumps(result_list)
         message = struct.pack("Q",len(a))+a
         client_socket.sendall(message)
