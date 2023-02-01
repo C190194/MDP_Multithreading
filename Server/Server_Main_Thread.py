@@ -102,14 +102,15 @@ class Receive_Img_Results(threading.Thread):
             result_data = data[:msg_size]
             data  = data[msg_size:]
             self.results = pickle.loads(result_data)
+            print(self.results)
                 
 if __name__ == '__main__':
     PC_thread = Connect_PC_Client(name="PC Thread")
     PC_thread.start()
     print("Waiting for PC thread to finish...")
     # show current img recog results
-    while PC_thread.is_alive():
-        if PC_thread.img_results:
-            print(PC_thread.img_results)
-            time.sleep(0.1)
+    # while PC_thread.is_alive():
+    #     if PC_thread.img_results:
+    #         print(PC_thread.img_results)
+    #         time.sleep(0.1)
     PC_thread.join()

@@ -1,5 +1,3 @@
 conda activate MDP-yolov8
-
 cd C:\Users\33420\Desktop\MDP\MDP_Multithreading\Server
-
 python Server_Main_Thread.py
