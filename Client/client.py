@@ -42,6 +42,8 @@ while True:
     results = model.predict(source=frame, save=False, save_txt=False, device="cpu")
     if results:
         print(results)
+        client_socket.send(results)
+        print("Results sent")
     key = cv2.waitKey(10) # -1 will be returned if no key is pressed
     if key  == 27: # press "ESC" to end connection
         break
