@@ -42,7 +42,13 @@ while True:
     results = model.predict(source=frame, save=False, save_txt=False, device="cpu")
     if results:
         print(results)
-        client_socket.send(results)
+        result_list = []
+        for box in results[0].boxes:
+            box_info = [box.xywh, box.conf, box.cls]
+            result_list.append(box_info)
+        a = pickle.dumps(result_list)
+        message = struct.pack("Q",len(a))+a
+        client_socket.sendall(message)
         print("Results sent")
     key = cv2.waitKey(10) # -1 will be returned if no key is pressed
     if key  == 27: # press "ESC" to end connection

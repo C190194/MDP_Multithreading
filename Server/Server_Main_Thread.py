@@ -46,8 +46,8 @@ class Connect_PC_Client(threading.Thread):
 
                 # keep updating img recog results
                 while img_result_thread.is_alive():
-                    img_results = img_result_thread.results
-                    print(img_results)
+                    self.img_results = img_result_thread.results
+                    print(self.img_results)
                     time.sleep(0.1)
 
                 stream_thread.join()
@@ -81,11 +81,31 @@ class Receive_Img_Results(threading.Thread):
         self.client_socket = client_socket
 
     def run(self):
-        self.results = self.client_socket.recv(1024)
+        #'b' or 'B'produces an instance of the bytes type instead of the str type
+        #used in handling binary data from network connections
+        data = b""
+        # Q: unsigned long long integer(8 bytes)
+        payload_size = struct.calcsize("Q")
+        while True:
+            while len(data) < payload_size:
+                packet = self.client_socket.recv(1024)
+                if not packet: break
+                data+=packet
+            packed_msg_size = data[:payload_size]
+            data = data[payload_size:]
+            msg_size = struct.unpack("Q",packed_msg_size)[0]
+            while len(data) < msg_size:
+                data += self.client_socket.recv(1024)
+            result_data = data[:msg_size]
+            data  = data[msg_size:]
+            self.results = pickle.loads(result_data)
                 
 if __name__ == '__main__':
     PC_thread = Connect_PC_Client(name="PC Thread")
     PC_thread.start()
     print("Waiting for PC thread to finish...")
-    
+    # show current img recog results
+    while PC_thread.is_alive():
+        print(PC_thread.img_results)
+        time.sleep(0.1)
     PC_thread.join()
