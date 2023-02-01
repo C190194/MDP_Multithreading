@@ -11,6 +11,7 @@ class Connect_PC_Client(threading.Thread):
     def __init__(self, name):
         super(Connect_PC_Client, self).__init__()
         self.name = name
+        self.img_results = []
         self.server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host_name  = socket.gethostname()
         self.host_ip = socket.gethostbyname(self.host_name)
@@ -52,6 +53,7 @@ class Connect_PC_Client(threading.Thread):
 
                 stream_thread.join()
                 img_result_thread.join()
+                break
 
 class Start_Stream(threading.Thread):
 
@@ -78,6 +80,7 @@ class Receive_Img_Results(threading.Thread):
     def __init__(self, name, client_socket):
         super(Receive_Img_Results, self).__init__()
         self.name = name
+        self.results = []
         self.client_socket = client_socket
 
     def run(self):
@@ -106,6 +109,7 @@ if __name__ == '__main__':
     print("Waiting for PC thread to finish...")
     # show current img recog results
     while PC_thread.is_alive():
-        print(PC_thread.img_results)
-        time.sleep(0.1)
+        if PC_thread.img_results:
+            print(PC_thread.img_results)
+            time.sleep(0.1)
     PC_thread.join()
