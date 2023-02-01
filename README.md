@@ -3,7 +3,7 @@
 ## RPi (Server) & PC (Client)
 
 ### ENV Setup:
-pip install ultralytics
+pip install ultralytics \n
 pip install roboflow
 
 ### Run the code:
