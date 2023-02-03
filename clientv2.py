@@ -4,10 +4,10 @@ import cv2
 import pickle
 import struct
 # import imutils
-from signal import signal, SIGPIPE, SIG_DFL
+#from signal import signal, SIGPIPE, SIG_DFL
 from ultralytics import YOLO
 
-signal(SIGPIPE,SIG_DFL)
+#signal(SIGPIPE,SIG_DFL)
 # Client socket
 # create an INET, STREAMing socket : 
 client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -27,12 +27,12 @@ model = YOLO("./best.pt")
 
 # Receive stream frames
 while True:
-    print('testing')
+    # print('testing')
     while len(data) < payload_size:
         packet = client_socket.recv(4*1024)
         if not packet: break
         data+=packet
-    #print(len(data))
+    # print(len(data))
     packed_msg_size = data[:payload_size]
     data = data[payload_size:]
     msg_size = struct.unpack(">L",packed_msg_size)[0]
@@ -57,10 +57,11 @@ while True:
             result_list = "Nothing detected!"
         
         a = pickle.dumps(result_list)
-        message = struct.pack("Q",len(a))+a
-        print(message)
+        message = struct.pack(">L",len(a))+a
+        # print(message)
         client_socket.sendall(message)
-        print("Results sent")
+        print("Results sent:")
+        print(result_list)
     key = cv2.waitKey(10) # -1 will be returned if no key is pressed
     if key  == 27: # press "ESC" to end connection
         break
