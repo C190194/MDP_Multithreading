@@ -1,4 +1,4 @@
-conda create -n MDP-rpi-test python==3.8
+conda create -n MDP-rpi-test python==3.9
 
 conda activate MDP-rpi-test
 
@@ -11,6 +11,12 @@ pip uninstall torch torchvision
 pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu113
 
 
+For Win:
+conda activate MDP-rpi-test
+cd C:\Users\22970\Desktop\MDP\RPi\MDP_Multithreading
+
 Client:
+python client_v3.py
+
 
 
