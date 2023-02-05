@@ -8,10 +8,11 @@ import math
 #from signal import signal, SIGPIPE, SIG_DFL
 from ultralytics import YOLO
 
+
 # Config
 class_label = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'Bullseye', 'C', 'D', 'Down', 'E', 'F', 'G', 'H', 'Left', 'Right', 'S', 'Stop', 'T', 'U', 'Up', 'V', 'W', 'X', 'Y', 'Z']
 Bullseye_Index = class_label.index("Bullseye")
-Image_Width_Center = 640 / 2
+Image_Width_Center = 160 / 2
 
 #signal(SIGPIPE,SIG_DFL)
 # Client socket
@@ -41,7 +42,7 @@ def maj_vote(result_list):
         box_position = []
         for box in results[0].boxes:
             if box.cls == Bullseye_Index:
-                box_position.append(math.inf)
+                box_position.append(1000)
             box_position.append(abs(Image_Width_Center - box.xywh[2])) # box.conf [box.xywh, box.cls]
         box_idx = box_position.index(min(box_position))
         box = results[0].boxes[box_idx]
@@ -64,10 +65,27 @@ def maj_vote(result_list):
     label = class_label[label_idx]
     return [img_idx, bbox_xyxy, label]
 
+def process_single_img(result_list):
+    box_list = []
+    box_position = []
+    for box in result_list[0][0].boxes:
+        if box.cls == Bullseye_Index:
+            continue
+        box_list.append(box)
+        box_position.append(abs(Image_Width_Center - box.xywh.tolist()[0][0])) # box.conf [box.xywh, box.cls]
+    if not box_position: # Nothing detected
+        return -1
+    box_idx = box_position.index(min(box_position))
+    box = box_list[box_idx]
+    
+    bbox_xyxy = box.xyxy.tolist()[0]
+    label = class_label[int(box.cls.tolist()[0])]
+    return [bbox_xyxy, label]
+
 while True:
     # Receive stream frames
     result_list = []
-    for i in range(5):
+    for i in range(1):
         print('Waiting for img', i)
         while len(data) < payload_size:
             packet = client_socket.recv(4*1024)
@@ -85,15 +103,20 @@ while True:
         cv2.imshow("Receiving...",frame)
         results = model.predict(show=True, source=frame, save=False, save_txt=False, device="cpu")
         result_list.append(results)
-        # do majority vote
-        vote_result = maj_vote(result_list)
-        # send result
-        a = pickle.dumps(vote_result)
-        message = struct.pack(">L",len(a))+a
-        client_socket.sendall(message)
-        print("Results sent:")
-        print(vote_result)
+    # # do majority vote
+    # final_result = maj_vote(result_list)
+    # process single image
+    final_result = process_single_img(result_list)
+    # send result
+    a = pickle.dumps(final_result)
+    message = struct.pack(">L",len(a))+a
+    client_socket.sendall(message)
+    print("Results sent:")
+    print(final_result)
+    client_socket.close()
+    break
         # key = cv2.waitKey(10) # -1 will be returned if no key is pressed
         # if key  == 27: # press "ESC" to end connection
         #     break
+
 client_socket.close()
