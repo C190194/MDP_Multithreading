@@ -150,8 +150,7 @@ while True:
         data  = data[msg_size:]
         frame = pickle.loads(frame_data,fix_imports=True,encoding="bytes")
         frame = cv2.imdecode(frame,cv2.IMREAD_COLOR)
-        resized_frame = cv2.resize(frame, (320,320))
-        #cv2.imshow("Receiving...",frame)
+        resized_frame = cv2.resize(frame, (640,640))
         # t2 = time.time()
         # print("Time taken to receive the image:", t2-t1)
         results = model.predict(show=False, source=resized_frame, save=False, save_txt=False, device="cpu")
@@ -167,24 +166,28 @@ while True:
         text1 = class_dcp[res[1]]
         text2 = "Image ID: " + str(class_id[res[1]])
         tx = int(res[0][2])
-        ty = int(res[0][3]/Image_Height_Change_Ratio)
-        cv2.putText(frame,text1,(tx+5,ty),0,0.5,(0,255,0),2)
-        cv2.putText(frame,text2,(tx+5,ty+15),0,0.5,(0,255,0),2)
+        if tx+175 > 639:
+            tx = int(res[0][0]-175)
+            if tx < 0:
+                tx = 0
+        ty = int((res[0][1]+res[0][3])/2/Image_Height_Change_Ratio)
+        # frame = cv2.resize(frame, (640,480))
+        cv2.rectangle(frame,(tx+5,ty-25),(tx+170,ty+25),(255,255,255),-1)
+        cv2.putText(frame,text1,(tx+5,ty),0,0.8,(0,255,0),1)
+        cv2.putText(frame,text2,(tx+5,ty+20),0,0.8,(0,255,0),1)
+        cv2.imwrite('image'+str(1)+'.jpg', frame)
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
         result, frame = cv2.imencode('.jpg', frame, encode_param)
         final_result = [frame, class_dcp[res[1]]]
-        # cv2.imshow("Show",frame)
-        # key = cv2.waitKey()
-        # if key  == 27: # press "ESC" 
-        #     input("dd")
+        
     # send result
     a = pickle.dumps(final_result)
     message = struct.pack(">L",len(a))+a
     client_socket.sendall(message)
     print("Results sent:")
     print(final_result)
-    client_socket.close()
-    break
+    # client_socket.close()
+    # break
         # key = cv2.waitKey(10) # -1 will be returned if no key is pressed
         # if key  == 27: # press "ESC" to end connection
         #     break
