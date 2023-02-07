@@ -4,15 +4,79 @@ import cv2
 import pickle
 import struct
 import math
+import time
 # import imutils
 #from signal import signal, SIGPIPE, SIG_DFL
 from ultralytics import YOLO
 
+# l = [1,2,3]
+# for n in reversed(range(len(l))):
+#     if l[n] == 1 or l[n] ==2:
+#         l.pop(n)
+# input(l)
 
 # Config
 class_label = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'Bullseye', 'C', 'D', 'Down', 'E', 'F', 'G', 'H', 'Left', 'Right', 'S', 'Stop', 'T', 'U', 'Up', 'V', 'W', 'X', 'Y', 'Z']
+class_dcp = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", \
+            "Alphabet A", "Alphabet B", "Bullseye", "Alphabet C", "Alphabet D", \
+            "down arrow", "Alphabet E", "Alphabet F", "Alphabet G", "Alphabet H", \
+            "left arrow", "right arrow", "Alphabet S", "Stop", "Alphabet T", \
+            "Alphabet U", "up arrow", "Alphabet V", "Alphabet W", "Alphabet X", \
+            "Alphabet Y", "Alphabet Z"]
+class_id = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, -1, 22, 23, 37, 24, 25, 26, 27, 39, 38, 28, 40, 29, \
+            30, 36, 31, 32, 33, 34, 35] # -1 for Bullseye
 Bullseye_Index = class_label.index("Bullseye")
-Image_Width_Center = 160 / 2
+S_Index = class_label.index("S")
+G_Index = class_label.index("G")
+Image_Width_Center = 320 / 2
+Image_Height_Change_Ratio = 320 / 240
+
+def process_single_img(result_list):
+    box_list = []
+    box_position = []
+    for box in result_list[0][0].boxes:
+        if box.cls == Bullseye_Index:
+            continue
+        box_list.append(box)
+        box_position.append(abs(Image_Width_Center - box.xywh.tolist()[0][0])) # box.conf [box.xywh, box.cls]
+    if not box_position: # Nothing detected => need to move a bit to take another picture
+        return -1
+    if len(box_list) > 1:
+        print("Multiple letters detected")
+        # remove "S" and "G" if multiple letters are detected
+        for i in reversed(range(len(box_list))):
+            box = box_list[i]
+            cls_idx = int(box.cls.tolist()[0])
+            if cls_idx == S_Index or cls_idx == G_Index:
+                box_list.pop(i)
+                box_position.pop(i)
+    # ** TBD: see if distant cards will be captured
+    box_idx = box_position.index(min(box_position))
+    box = box_list[box_idx]
+    
+    bbox_xyxy = box.xyxy.tolist()[0]
+    # bbox_xyxy[1] = bbox_xyxy[1] / Image_Height_Change_Ratio
+    # bbox_xyxy[3] = bbox_xyxy[3] / Image_Height_Change_Ratio
+    label_idx = int(box.cls.tolist()[0])
+    return [bbox_xyxy, label_idx]
+
+# TEST
+# model = YOLO("./best.pt")
+# path = "./T/img_79.jpg"
+# results = model.predict(show = False,source=path, save=False, save_txt=False)
+# print("--- Results ---")
+# res = process_single_img([results])
+# img = cv2.imread(path)
+# tl = (int(res[0][0]),int(res[0][1]))
+# br = (int(res[0][2]),int(res[0][3]))
+# cv2.rectangle(img,tl,br,(0,255,0),2)
+# text = 
+# cv2.putText(img,res[1],(int(res[0][2])+5,int(res[0][3])),0,0.7,(0,255,0))
+# cv2.imshow("Show",img)
+# key = cv2.waitKey()
+# if key  == 27: # press "ESC" to end connection
+#     input("dd")
+
 
 #signal(SIGPIPE,SIG_DFL)
 # Client socket
@@ -34,53 +98,38 @@ model = YOLO("./best.pt")
 
 
 
-def maj_vote(result_list):
-    img_box = [] # 1 box for 1 image
-    img_label = [] # 1 label for 1 image
-    for results in result_list:
-        # in 1 image, get the bbox that is closest to the center
-        box_position = []
-        for box in results[0].boxes:
-            if box.cls == Bullseye_Index:
-                box_position.append(1000)
-            box_position.append(abs(Image_Width_Center - box.xywh[2])) # box.conf [box.xywh, box.cls]
-        box_idx = box_position.index(min(box_position))
-        box = results[0].boxes[box_idx]
-        img_box.append(box)
-        img_label.append(box.cls)
+# def maj_vote(result_list):
+#     img_box = [] # 1 box for 1 image
+#     img_label = [] # 1 label for 1 image
+#     for results in result_list:
+#         # in 1 image, get the bbox that is closest to the center
+#         box_position = []
+#         for box in results[0].boxes:
+#             if box.cls == Bullseye_Index:
+#                 box_position.append(1000)
+#             box_position.append(abs(Image_Width_Center - box.xywh[2])) # box.conf [box.xywh, box.cls]
+#         box_idx = box_position.index(min(box_position))
+#         box = results[0].boxes[box_idx]
+#         img_box.append(box)
+#         img_label.append(box.cls)
     
-    highest_freq = 0
-    label_idx = 0
-    for l in set(img_label):
-        if l == Bullseye_Index:
-            continue
-        num = img_label.count(l)
-        if num > highest_freq:
-            highest_freq = num
-            label_idx = l
-    if highest_freq == 0: # Nothing detected
-        return -1
-    img_idx = img_label.index(label_idx)
-    bbox_xyxy = img_box[img_idx].xyxy
-    label = class_label[label_idx]
-    return [img_idx, bbox_xyxy, label]
+#     highest_freq = 0
+#     label_idx = 0
+#     for l in set(img_label):
+#         if l == Bullseye_Index:
+#             continue
+#         num = img_label.count(l)
+#         if num > highest_freq:
+#             highest_freq = num
+#             label_idx = l
+#     if highest_freq == 0: # Nothing detected
+#         return -1
+#     img_idx = img_label.index(label_idx)
+#     bbox_xyxy = img_box[img_idx].xyxy
+#     label = class_label[label_idx]
+#     return [img_idx, bbox_xyxy, label]
 
-def process_single_img(result_list):
-    box_list = []
-    box_position = []
-    for box in result_list[0][0].boxes:
-        if box.cls == Bullseye_Index:
-            continue
-        box_list.append(box)
-        box_position.append(abs(Image_Width_Center - box.xywh.tolist()[0][0])) # box.conf [box.xywh, box.cls]
-    if not box_position: # Nothing detected
-        return -1
-    box_idx = box_position.index(min(box_position))
-    box = box_list[box_idx]
-    
-    bbox_xyxy = box.xyxy.tolist()[0]
-    label = class_label[int(box.cls.tolist()[0])]
-    return [bbox_xyxy, label]
+
 
 while True:
     # Receive stream frames
@@ -91,6 +140,7 @@ while True:
             packet = client_socket.recv(4*1024)
             if not packet: break
             data+=packet
+        # t1 = time.time()
         packed_msg_size = data[:payload_size]
         data = data[payload_size:]
         msg_size = struct.unpack(">L",packed_msg_size)[0]
@@ -100,13 +150,33 @@ while True:
         data  = data[msg_size:]
         frame = pickle.loads(frame_data,fix_imports=True,encoding="bytes")
         frame = cv2.imdecode(frame,cv2.IMREAD_COLOR)
-        cv2.imshow("Receiving...",frame)
-        results = model.predict(show=True, source=frame, save=False, save_txt=False, device="cpu")
+        resized_frame = cv2.resize(frame, (320,320))
+        #cv2.imshow("Receiving...",frame)
+        # t2 = time.time()
+        # print("Time taken to receive the image:", t2-t1)
+        results = model.predict(show=False, source=resized_frame, save=False, save_txt=False, device="cpu")
         result_list.append(results)
-    # # do majority vote
-    # final_result = maj_vote(result_list)
     # process single image
-    final_result = process_single_img(result_list)
+    res = process_single_img(result_list)
+    if res == -1:
+        final_result = res
+    else:
+        tl = (int(res[0][0]),int(res[0][1]/Image_Height_Change_Ratio))
+        br = (int(res[0][2]),int(res[0][3]/Image_Height_Change_Ratio))
+        cv2.rectangle(frame,tl,br,(0,255,0),2)
+        text1 = class_dcp[res[1]]
+        text2 = "Image ID: " + str(class_id[res[1]])
+        tx = int(res[0][2])
+        ty = int(res[0][3]/Image_Height_Change_Ratio)
+        cv2.putText(frame,text1,(tx+5,ty),0,0.5,(0,255,0),2)
+        cv2.putText(frame,text2,(tx+5,ty+15),0,0.5,(0,255,0),2)
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
+        result, frame = cv2.imencode('.jpg', frame, encode_param)
+        final_result = [frame, class_dcp[res[1]]]
+        # cv2.imshow("Show",frame)
+        # key = cv2.waitKey()
+        # if key  == 27: # press "ESC" 
+        #     input("dd")
     # send result
     a = pickle.dumps(final_result)
     message = struct.pack(">L",len(a))+a
