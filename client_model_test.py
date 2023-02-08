@@ -28,7 +28,7 @@ data = b""
 payload_size = struct.calcsize(">L")
 #print("payload_size: {}".format(payload_size))
 # Load Yolo v8 model
-model = YOLO("./best.pt")
+model = YOLO("./best_v8s.pt")
 
 # Receive stream frames
 i = 0

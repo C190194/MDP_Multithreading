@@ -15,10 +15,12 @@ G_index = class_label.index("G")
 Image_Width_Center = 320 / 2
 
 # Load Yolo v8 model
-model = YOLO("./best.pt")
+model = YOLO("./best_v8s.pt")
 
-img = "./T_result/img_79.jpg"
-for i in range(5):
+path = "./8/img_17.jpg"
+img = cv2.imread(path)
+img= cv2.resize(img, (640,640))
+for i in range(1):
     results = model.predict(show = False,source=img, save=False, save_txt=False)
     print("--- Results ---")
     for box in results[0].boxes:
