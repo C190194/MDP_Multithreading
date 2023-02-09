@@ -3,6 +3,7 @@ import socket
 import cv2
 import pickle
 import struct
+import os
 # import imutils
 #from signal import signal, SIGPIPE, SIG_DFL
 from ultralytics import YOLO
@@ -30,9 +31,15 @@ payload_size = struct.calcsize(">L")
 # Load Yolo v8 model
 model = YOLO("./best_v8s.pt")
 
+new_letter = "T"
+if not os.path.exists("./new_image/"+new_letter):
+    os.makedirs("./new_image/"+new_letter)
+    os.makedirs("./new_image/"+new_letter+"_result")
+
 # Receive stream frames
 i = 0
 while True:
+# for i in range(60):
     # print('testing')
     while len(data) < payload_size:
         packet = client_socket.recv(4*1024)
@@ -48,11 +55,11 @@ while True:
     data  = data[msg_size:]
     frame = pickle.loads(frame_data,fix_imports=True,encoding="bytes")
     frame = cv2.imdecode(frame,cv2.IMREAD_COLOR)
-    frame = cv2.resize(frame, (320,320))
+    frame = cv2.resize(frame, (640,640))
     # cv2.imshow("Receiving...",frame)
-    # cv2.imwrite("./T/img_"+str(i)+".jpg", frame)
-    results = model.predict(show = True,source=frame, save=False, save_txt=False)
-    # cv2.imwrite("./T_result/img_"+str(i)+".jpg", frame)
+    cv2.imwrite("./new_image/"+new_letter+"/img_"+new_letter+"_"+str(i)+".jpg", frame)
+    results = model.predict(show=True, source=frame, save=False, save_txt=False)
+    cv2.imwrite("./new_image/"+new_letter+"_result/img_"+new_letter+"_"+str(i)+".jpg", frame)
     i += 1
     print("--- Results ---")
     for box in results[0].boxes:
@@ -61,6 +68,7 @@ while True:
     # if key  == 27: # press "ESC" to end connection
     #     client_socket.close()
     #     break
+client_socket.close()
 
 # Model accuracy record:
 """

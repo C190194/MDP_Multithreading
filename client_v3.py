@@ -5,9 +5,18 @@ import pickle
 import struct
 import math
 import time
+import os
+import glob
 # import imutils
 #from signal import signal, SIGPIPE, SIG_DFL
 from ultralytics import YOLO
+
+
+# for name in glob.glob("./T/*"):
+#     img = cv2.imread(name)
+#     img = cv2.resize(img, (640,640))
+#     cv2.imwrite(name, img)
+# input("done")
 
 # l = [1,2,3]
 # for n in reversed(range(len(l))):
@@ -87,51 +96,35 @@ host_ip = '192.168.3.3' # put the ip of the server here
 port = 10050 # Port to listen on (non-privileged ports are > 1023)
 # now connect to the web server on the specified port number
 client_socket.connect((host_ip,port)) 
-#'b' or 'B'produces an instance of the bytes type instead of the str type
-#used in handling binary data from network connections
-data = b""
-# Q: unsigned long long integer(8 bytes)
-payload_size = struct.calcsize(">L")
-#print("payload_size: {}".format(payload_size))
+
 # Load Yolo v8 model
-model = YOLO("./best.pt")
+model = YOLO("./best_v8s.pt")
 
 
+# Receive obstacle info and calculate path command from RPi
+while True:
+    data = client_socket.recv(4*1024)
+    if not data:
+        continue
+    s = data.decode('UTF-8').strip()
+    print("Received from RPi:", s)
+    if s == "path":
+        break
 
-# def maj_vote(result_list):
-#     img_box = [] # 1 box for 1 image
-#     img_label = [] # 1 label for 1 image
-#     for results in result_list:
-#         # in 1 image, get the bbox that is closest to the center
-#         box_position = []
-#         for box in results[0].boxes:
-#             if box.cls == Bullseye_Index:
-#                 box_position.append(1000)
-#             box_position.append(abs(Image_Width_Center - box.xywh[2])) # box.conf [box.xywh, box.cls]
-#         box_idx = box_position.index(min(box_position))
-#         box = results[0].boxes[box_idx]
-#         img_box.append(box)
-#         img_label.append(box.cls)
-    
-#     highest_freq = 0
-#     label_idx = 0
-#     for l in set(img_label):
-#         if l == Bullseye_Index:
-#             continue
-#         num = img_label.count(l)
-#         if num > highest_freq:
-#             highest_freq = num
-#             label_idx = l
-#     if highest_freq == 0: # Nothing detected
-#         return -1
-#     img_idx = img_label.index(label_idx)
-#     bbox_xyxy = img_box[img_idx].xyxy
-#     label = class_label[label_idx]
-#     return [img_idx, bbox_xyxy, label]
-
-
+# Send the car path to RPi
+path_object = ["some path"]
+a = pickle.dumps(path_object)
+message = struct.pack(">L",len(a))+a
+client_socket.sendall(message)
+print("Car path sent")
 
 while True:
+    #'b' or 'B'produces an instance of the bytes type instead of the str type
+    #used in handling binary data from network connections
+    data = b""
+    # Q: unsigned long long integer(8 bytes)
+    payload_size = struct.calcsize(">L")
+
     # Receive stream frames
     result_list = []
     for i in range(1):
@@ -151,6 +144,7 @@ while True:
         frame = pickle.loads(frame_data,fix_imports=True,encoding="bytes")
         frame = cv2.imdecode(frame,cv2.IMREAD_COLOR)
         resized_frame = cv2.resize(frame, (640,640))
+        # cv2.imwrite('image_T_'+str(21)+'.jpg', resized_frame)
         # t2 = time.time()
         # print("Time taken to receive the image:", t2-t1)
         results = model.predict(show=False, source=resized_frame, save=False, save_txt=False, device="cpu")
@@ -159,6 +153,7 @@ while True:
     res = process_single_img(result_list)
     if res == -1:
         final_result = res
+        input("hold")
     else:
         tl = (int(res[0][0]),int(res[0][1]/Image_Height_Change_Ratio))
         br = (int(res[0][2]),int(res[0][3]/Image_Height_Change_Ratio))
@@ -193,3 +188,34 @@ while True:
         #     break
 
 client_socket.close()
+
+# def maj_vote(result_list):
+#     img_box = [] # 1 box for 1 image
+#     img_label = [] # 1 label for 1 image
+#     for results in result_list:
+#         # in 1 image, get the bbox that is closest to the center
+#         box_position = []
+#         for box in results[0].boxes:
+#             if box.cls == Bullseye_Index:
+#                 box_position.append(1000)
+#             box_position.append(abs(Image_Width_Center - box.xywh[2])) # box.conf [box.xywh, box.cls]
+#         box_idx = box_position.index(min(box_position))
+#         box = results[0].boxes[box_idx]
+#         img_box.append(box)
+#         img_label.append(box.cls)
+    
+#     highest_freq = 0
+#     label_idx = 0
+#     for l in set(img_label):
+#         if l == Bullseye_Index:
+#             continue
+#         num = img_label.count(l)
+#         if num > highest_freq:
+#             highest_freq = num
+#             label_idx = l
+#     if highest_freq == 0: # Nothing detected
+#         return -1
+#     img_idx = img_label.index(label_idx)
+#     bbox_xyxy = img_box[img_idx].xyxy
+#     label = class_label[label_idx]
+#     return [img_idx, bbox_xyxy, label]
