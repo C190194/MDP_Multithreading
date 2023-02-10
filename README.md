@@ -7,5 +7,5 @@ pip install ultralytics <br/>
 pip install roboflow
 
 ### Run the code:
-On RPi: run Server_Main_Thread.py in "Server" folder  <br/>
-On PC: run client.py in "Client" folder (Note: change the host_ip to 192.168.3.3)
+On RPi: run main_thread.py from https://github.com/limlincoln/SC2079_CZ3004-MDP/blob/main/RPI/Multithreading/main_thread.py  <br/>
+On PC: run client_v3.py in root folder (Note: change the host_ip to 192.168.3.3)
