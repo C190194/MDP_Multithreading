@@ -29,12 +29,12 @@ data = b""
 payload_size = struct.calcsize(">L")
 #print("payload_size: {}".format(payload_size))
 # Load Yolo v8 model
-model = YOLO("./best_v8s.pt")
+model = YOLO("./best_v8s_new.pt")
 
 new_letter = "T"
-if not os.path.exists("./new_image/"+new_letter):
-    os.makedirs("./new_image/"+new_letter)
-    os.makedirs("./new_image/"+new_letter+"_result")
+# if not os.path.exists("./new_image/"+new_letter):
+#     os.makedirs("./new_image/"+new_letter)
+#     os.makedirs("./new_image/"+new_letter+"_result")
 
 # Receive stream frames
 i = 0
@@ -57,9 +57,9 @@ while True:
     frame = cv2.imdecode(frame,cv2.IMREAD_COLOR)
     frame = cv2.resize(frame, (640,640))
     # cv2.imshow("Receiving...",frame)
-    cv2.imwrite("./new_image/"+new_letter+"/img_"+new_letter+"_"+str(i)+".jpg", frame)
+    # cv2.imwrite("./new_image/"+new_letter+"/img_"+new_letter+"_"+str(i)+".jpg", frame)
     results = model.predict(show=True, source=frame, save=False, save_txt=False)
-    cv2.imwrite("./new_image/"+new_letter+"_result/img_"+new_letter+"_"+str(i)+".jpg", frame)
+    # cv2.imwrite("./new_image/"+new_letter+"_result/img_"+new_letter+"_"+str(i)+".jpg", frame)
     i += 1
     print("--- Results ---")
     for box in results[0].boxes:

@@ -98,7 +98,7 @@ port = 10050 # Port to listen on (non-privileged ports are > 1023)
 client_socket.connect((host_ip,port)) 
 
 # Load Yolo v8 model
-model = YOLO("./best_v8s.pt")
+model = YOLO("./best_v8s_new.pt")
 
 
 # Receive obstacle info and calculate path command from RPi
