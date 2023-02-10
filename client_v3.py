@@ -118,6 +118,9 @@ message = struct.pack(">L",len(a))+a
 client_socket.sendall(message)
 print("Car path sent")
 
+
+# Wait for images from RPi 
+#client_socket.settimeout(5)
 while True:
     #'b' or 'B'produces an instance of the bytes type instead of the str type
     #used in handling binary data from network connections
