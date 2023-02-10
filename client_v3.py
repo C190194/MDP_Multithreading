@@ -189,6 +189,27 @@ while True:
 
 client_socket.close()
 
+# Load the images
+image1 = cv2.imread('image1.jpg')
+image2 = cv2.imread('image2.jpg')
+image3 = cv2.imread('image3.jpg')
+image4 = cv2.imread('image4.jpg')
+image5 = cv2.imread('image5.jpg')
+image6 = cv2.imread('image6.jpg')
+
+# Stack the images vertically
+row1 = np.hstack((image1, image2,image3))
+row2 = np.hstack((image4, image5,image6))
+
+# Stack the rows vertically
+stacked_image = np.vstack((row1, row2))
+
+# Display the combined image
+cv2.imshow("Stitched Image", stacked_image)
+cv2.waitKey('A')
+cv2.destroyAllWindows()
+
+
 # def maj_vote(result_list):
 #     img_box = [] # 1 box for 1 image
 #     img_label = [] # 1 label for 1 image
