@@ -17,8 +17,8 @@ For Win:
 conda activate MDP-rpi-test
 cd C:\Users\22970\Desktop\MDP\RPi\MDP_Multithreading
 
-Client:
-python client_v3.py
+RPi SSH:
+python /home/RP03/Desktop/Python\ Test/SC2079_CZ3004-MDP/RPI/Multithreading/main_thread.py
 
 
 
