@@ -100,7 +100,7 @@ client_socket.connect((host_ip,port))
 # Load Yolo v8 model
 model = YOLO("./best_v8s_new.pt")
 
-
+'''
 # Receive obstacle info and calculate path command from RPi
 while True:
     data = client_socket.recv(4*1024)
@@ -118,7 +118,7 @@ message = struct.pack(">L",len(a))+a
 client_socket.sendall(message)
 print("Car path sent")
 
-
+'''
 # Wait for images from RPi 
 #client_socket.settimeout(5)
 while True:
@@ -156,7 +156,7 @@ while True:
     res = process_single_img(result_list)
     if res == -1:
         final_result = res
-        input("hold")
+        # input("hold")
     else:
         tl = (int(res[0][0]),int(res[0][1]/Image_Height_Change_Ratio))
         br = (int(res[0][2]),int(res[0][3]/Image_Height_Change_Ratio))
