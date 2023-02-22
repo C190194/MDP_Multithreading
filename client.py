@@ -93,6 +93,7 @@ class Client:
                 continue
             s = data.decode('UTF-8').strip()
             print("Received from RPi:", s)
+            s_lst = s.split([": ", ","])
             {
                 2: [ (2,7) , "N" ]
             }
@@ -151,7 +152,7 @@ class Client:
 
             # Receive stream frames
             result_list = []
-            
+
             print('Waiting for img ...')
             while len(data) < payload_size:
                 packet = self.socket.recv(4 * 1024)
